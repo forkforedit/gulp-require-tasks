@@ -11,7 +11,9 @@ const DEFAULT_OPTIONS = {
   separator: ':',
   passGulp: true,
   passCallback: true,
-  gulp: null
+  gulp: null,
+  match: /gulpmodule.js$/,
+  taskNameTemplate: 'resources/assets/###.js'
 };
 
 
@@ -21,10 +23,19 @@ function gulpRequireTasks (options) {
 
   const gulp = options.gulp || require('gulp');
 
+  var check = function(path) {
+    if(options.match && path.match(options.match)){
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   // Recursively visiting all modules in the specified directory
   // and registering Gulp tasks.
   requireDirectory(module, options.path, {
-    visit: moduleVisitor
+    visit: moduleVisitor,
+    include: check
   });
 
 
@@ -38,7 +49,11 @@ function gulpRequireTasks (options) {
 
     module = normalizeModule(module);
 
-    const taskName = taskNameFromPath(modulePath);
+    var taskName = taskNameFromPath(modulePath);
+
+    if(options.taskNameTemplate){
+      taskName = options.taskNameTemplate.replace("###", taskName);
+    }
 
     if (module.dep) {
       console.warn(
